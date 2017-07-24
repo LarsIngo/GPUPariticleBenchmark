@@ -21,7 +21,6 @@ public class GSExpandAppendMain : MonoBehaviour
 
         mPositionBuffer = new ComputeBuffer(width * height, sizeof(float) * 4, ComputeBufferType.Append);
         mArgsBuffer = new ComputeBuffer(1, sizeof(int) * 4, ComputeBufferType.IndirectArguments);
-
         mArgsBuffer.SetData(new int[] { width * height, 1, 0, 0 });
 
         Shader renderShader = Resources.Load<Shader>("GSExpandAppend/GSExpandAppendRenderShader");
@@ -34,8 +33,6 @@ public class GSExpandAppendMain : MonoBehaviour
 	
 	void Update ()
     {
-        //mPositionBuffer.SetCounterValue(0);
-
         mComputeShader.SetBuffer(0, "gPosition", mPositionBuffer);
 
         mComputeShader.SetInt("gCount", width * height);
@@ -48,13 +45,15 @@ public class GSExpandAppendMain : MonoBehaviour
 
     void OnRenderObject()
     {
-        //ComputeBuffer.CopyCount(mPositionBuffer, mArgsBuffer, 0);
-
+        Graphics.SetRandomWriteTarget(1, mPositionBuffer, true);
+        
         mRenderMaterial.SetPass(0);
 
-        mRenderMaterial.SetBuffer("gPosition", mPositionBuffer);
+        ComputeBuffer.CopyCount(mPositionBuffer, mArgsBuffer, 0);
 
         Graphics.DrawProceduralIndirect(MeshTopology.Points, mArgsBuffer);
+
+        Graphics.ClearRandomWriteTargets();
     }
 
     void OnDestroy()
