@@ -37,7 +37,7 @@
 
                 output.svPosition = UnityObjectToClipPos(float4(vPosition, 1));
 
-                vID = vID % 6;
+                vID = vID % 3;
                 float x = vID == 0 || vID == 1 || vID == 3;
                 float y = vID == 0 || vID == 2 || vID == 5;
                 output.uv = float2(x, 1.0f - y);

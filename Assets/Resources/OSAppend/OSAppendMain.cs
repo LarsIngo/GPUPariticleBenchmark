@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class OSAppendMain : MonoBehaviour
 {
-    const int width = 4096; // TMP 8192
-    const int height = 4096; // TMP 4096
+    const int width = 1; // TMP 8192
+    const int height = 1; // TMP 4096
     const float spacing = 0.05f;
 
     ComputeBuffer mPositionBuffer = null;
@@ -18,19 +18,19 @@ public class OSAppendMain : MonoBehaviour
 
 	void Start ()
     {
-        Camera.main.transform.position = new Vector3(width / 2.0f * spacing, height / 2.0f * spacing, -150);
+        Camera.main.transform.position = new Vector3(width / 2.0f * spacing, height / 2.0f * spacing, -1); // TMP -150
 
         mPositionBuffer = new ComputeBuffer(width * height, sizeof(float) * 4, ComputeBufferType.Default);
         mArgsBuffer = new ComputeBuffer(1, sizeof(int) * 4, ComputeBufferType.IndirectArguments);
 
-        Shader renderShader = Resources.Load<Shader>("OSStructure/OSStructureRenderShader");
+        Shader renderShader = Resources.Load<Shader>("OSAppend/OSAppendRenderShader");
         Debug.Assert(renderShader, "Failed loading render shader.");
         mRenderMaterial = new Material(renderShader);
 
-        mComputeShader = Resources.Load<ComputeShader>("OSStructure/OSStructureComputeShader");
+        mComputeShader = Resources.Load<ComputeShader>("OSAppend/OSAppendComputeShader");
         Debug.Assert(mComputeShader, "Failed loading compute shader.");
 
-        mVertexBuffer = new ComputeBuffer(width * height * 6, sizeof(float) * 4, ComputeBufferType.Append);
+        mVertexBuffer = new ComputeBuffer(width * height * 3, sizeof(float) * 4, ComputeBufferType.Append);
 
         Vector4[] positionArray = new Vector4[width * height];
         for (int i = 0; i < width * height; ++i)
@@ -39,7 +39,7 @@ public class OSAppendMain : MonoBehaviour
         }
         mPositionBuffer.SetData(positionArray);
 
-        mArgsBuffer.SetData(new int[] { width * height * 6, 1, 0, 0 });
+        mArgsBuffer.SetData(new int[] { 1337, 1, 0, 0 });
     }
 	
 	void Update ()
@@ -55,13 +55,18 @@ public class OSAppendMain : MonoBehaviour
 
     void OnRenderObject()
     {
+        //mVertexBuffer.SetCounterValue(1338);
+        ComputeBuffer.CopyCount(mVertexBuffer, mArgsBuffer, 0);
+        int[] r = new int[4];
+        mArgsBuffer.GetData(r);
+        Debug.Log(r[0]);
+
         mRenderMaterial.SetPass(0);
 
         mRenderMaterial.SetBuffer("gVertexBuffer", mVertexBuffer);
 
-        ComputeBuffer.CopyCount(mPositionBuffer, mArgsBuffer, 0);
-
-        Graphics.DrawProceduralIndirect(MeshTopology.Triangles, mArgsBuffer);
+        //Graphics.DrawProceduralIndirect(MeshTopology.Triangles, mArgsBuffer);
+        Graphics.DrawProcedural(MeshTopology.Triangles, 3, 1);
     }
 
     void OnDestroy()

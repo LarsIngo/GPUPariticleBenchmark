@@ -22,13 +22,13 @@ void MAIN(uint3 id : SV_DispatchThreadID)
     float3 pRight = cross(pForward, lensUp);
     float3 pUp = cross(pRight, pForward);
 
-    for (int vID = 0; vID < 6; ++vID)
+    for (int vID = 0; vID < 3; ++vID)
     {
         float x = vID == 0 || vID == 1 || vID == 3;
         float y = vID == 0 || vID == 2 || vID == 5;
 
         float3 vPosition = pPosition + pRight * ((x * 2.f - 1.f) * pScale.x) + pUp * ((y * 2.f - 1.f) * pScale.y);
 
-        gVertexBuffer[tID * 6 + vID] = float4(vPosition.xyz, 0);
+        gVertexBuffer.Append(float4(vPosition, 0));
     }
 }
