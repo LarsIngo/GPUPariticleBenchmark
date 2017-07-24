@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class OSStuctrueMain : MonoBehaviour
 {
-    const int width = 1024; // TMP 8192
+    const int width = 4096; // TMP 8192
     const int height = 4096; // TMP 4096
     const float spacing = 0.05f;
 
@@ -18,7 +18,7 @@ public class OSStuctrueMain : MonoBehaviour
 
 	void Start ()
     {
-        Camera.main.transform.position = new Vector3(width / 2.0f * spacing, height / 2.0f * spacing, -50); // TMP -150
+        Camera.main.transform.position = new Vector3(width / 2.0f * spacing, height / 2.0f * spacing, -150);
 
         mPositionBuffer = new ComputeBuffer(width * height, sizeof(float) * 4, ComputeBufferType.Default);
         mArgsBuffer = new ComputeBuffer(1, sizeof(int) * 4, ComputeBufferType.IndirectArguments);
@@ -39,7 +39,7 @@ public class OSStuctrueMain : MonoBehaviour
         }
         mPositionBuffer.SetData(positionArray);
 
-        mArgsBuffer.SetData(new int[] { 6, width * height, 0, 0 });
+        mArgsBuffer.SetData(new int[] { width * height * 6, 1, 0, 0 });
     }
 	
 	void Update ()
@@ -58,6 +58,7 @@ public class OSStuctrueMain : MonoBehaviour
         mRenderMaterial.SetBuffer("gVertexBuffer", mVertexBuffer);
 
         Graphics.DrawProceduralIndirect(MeshTopology.Triangles, mArgsBuffer);
+        //Graphics.DrawProcedural(MeshTopology.Triangles, width * height * 6, 1);
     }
 
     void OnDestroy()

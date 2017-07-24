@@ -29,14 +29,15 @@
                 float2 uv : UV;
 			};
 
-            VS_OUTPUT vert(uint vID : SV_VertexID, uint iID : SV_InstanceID)
+            VS_OUTPUT vert(uint vID : SV_VertexID)
 			{
                 VS_OUTPUT output;
 
-                float3 vPosition = gVertexBuffer[iID * 6 + vID];
+                float3 vPosition = gVertexBuffer[vID];
 
                 output.svPosition = UnityObjectToClipPos(float4(vPosition, 1));
 
+                vID = vID % 6;
                 float x = vID == 0 || vID == 1 || vID == 3;
                 float y = vID == 0 || vID == 2 || vID == 5;
                 output.uv = float2(x, 1.0f - y);
