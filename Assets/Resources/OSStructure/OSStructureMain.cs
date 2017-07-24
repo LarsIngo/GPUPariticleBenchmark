@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class OSStuctrueMain : MonoBehaviour
+public class OSStructureMain : MonoBehaviour
 {
     const int width = 4096; // TMP 8192
     const int height = 4096; // TMP 4096
@@ -23,11 +23,11 @@ public class OSStuctrueMain : MonoBehaviour
         mPositionBuffer = new ComputeBuffer(width * height, sizeof(float) * 4, ComputeBufferType.Default);
         mArgsBuffer = new ComputeBuffer(1, sizeof(int) * 4, ComputeBufferType.IndirectArguments);
 
-        Shader renderShader = Resources.Load<Shader>("OSStuctrue/OSStuctrueRenderShader");
+        Shader renderShader = Resources.Load<Shader>("OSStructure/OSStructureRenderShader");
         Debug.Assert(renderShader, "Failed loading render shader.");
         mRenderMaterial = new Material(renderShader);
 
-        mComputeShader = Resources.Load<ComputeShader>("OSStuctrue/OSStuctrueComputeShader");
+        mComputeShader = Resources.Load<ComputeShader>("OSStructure/OSStructureComputeShader");
         Debug.Assert(mComputeShader, "Failed loading compute shader.");
 
         mVertexBuffer = new ComputeBuffer(width * height * 6, sizeof(float) * 4);

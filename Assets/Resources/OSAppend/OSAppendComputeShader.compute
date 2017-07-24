@@ -1,0 +1,34 @@
+﻿#pragma kernel MAIN
+
+StructuredBuffer<float4> gPosition;
+
+AppendStructuredBuffer<float4> gVertexBuffer;
+
+uniform int gCount;
+
+[numthreads(64, 1, 1)]
+void MAIN(uint3 id : SV_DispatchThreadID)
+{
+    int tID = id.x;
+
+    if (tID >= gCount) return;
+
+    float3 lensUp = float3(0,1,0);//UNITY_MATRIX_IT_MV[1].xyz;
+
+    float3 pPosition = gPosition[tID].xyz;
+    float2 pScale = float2(0.1f, 0.1f);
+
+    float3 pForward = float3(0,0,-1);//normalize(_WorldSpaceCameraPos - pPosition);
+    float3 pRight = cross(pForward, lensUp);
+    float3 pUp = cross(pRight, pForward);
+
+    for (int vID = 0; vID < 6; ++vID)
+    {
+        float x = vID == 0 || vID == 1 || vID == 3;
+        float y = vID == 0 || vID == 2 || vID == 5;
+
+        float3 vPosition = pPosition + pRight * ((x * 2.f - 1.f) * pScale.x) + pUp * ((y * 2.f - 1.f) * pScale.y);
+
+        gVertexBuffer[tID * 6 + vID] = float4(vPosition.xyz, 0);
+    }
+}
