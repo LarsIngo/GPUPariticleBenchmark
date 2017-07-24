@@ -1,26 +1,26 @@
 ﻿Shader "Custom/BufferShader"
 {
-    SubShader
-    {
-        Pass
-        {
-            ZTest Less
-            Cull Back
-            ZWrite Off
-            BlendOp Add
-            Blend SrcAlpha OneMinusSrcAlpha
+	SubShader
+	{
+		Pass
+		{
+			ZTest Less
+			Cull Back
+			ZWrite Off
+			BlendOp Add
+			Blend SrcAlpha OneMinusSrcAlpha
 
-            Fog	{ Mode off }
+			Fog	{ Mode off }
 
-            CGPROGRAM
+			CGPROGRAM
 
-            #include "UnityCG.cginc"
-            #pragma target 5.0
-            #pragma vertex vert
-            #pragma geometry geom
-            #pragma fragment frag
+			#include "UnityCG.cginc"
+			#pragma target 5.0
+			#pragma vertex vert
+			#pragma geometry geom
+			#pragma fragment frag
 
-            StructuredBuffer<float4> gPosition;
+            ConsumeStructuredBuffer<float4> gPosition : register(u1);
 
 			// ---
 
@@ -33,7 +33,7 @@
 			{
                 VS_OUTPUT output;
 
-                output.svPosition = float4(gPosition[vID].xyz, 1);
+                output.svPosition = gPosition.Consume();//float4(gPosition[vID].xyz, 1);
 
 				return output;
 			}
