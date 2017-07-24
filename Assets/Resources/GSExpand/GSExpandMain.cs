@@ -11,6 +11,8 @@ public class GSExpandMain : MonoBehaviour
     ComputeBuffer mPositionBuffer = null;
     ComputeBuffer mArgsBuffer = null;
 
+    ComputeShader mComputeShader = null;
+
     Material mRenderMaterial = null;
 
 	void Start ()
@@ -24,19 +26,21 @@ public class GSExpandMain : MonoBehaviour
         Debug.Assert(renderShader, "Failed loading render shader.");
         mRenderMaterial = new Material(renderShader);
 
-        Vector4[] positionArray = new Vector4[width * height];
-        for (int i = 0; i < width * height; ++i)
-        {
-            positionArray[i] = new Vector4((i % width) * spacing, (i / width) * spacing, 0, 0);
-        }
-        mPositionBuffer.SetData(positionArray);
+        mComputeShader = Resources.Load<ComputeShader>("GSExpand/GSExpandComputeShader");
+        Debug.Assert(mComputeShader, "Failed loading compute shader.");
 
         mArgsBuffer.SetData(new int[] { width * height, 1, 0, 0 });
     }
 	
 	void Update ()
     {
+        mComputeShader.SetBuffer(0, "gPosition", mPositionBuffer);
+        mComputeShader.SetInt("gCount", width * height);
 
+        mComputeShader.SetFloat("gSpacing", spacing);
+        mComputeShader.SetInt("gWidth", width);
+
+        mComputeShader.Dispatch(0, (int)Mathf.Ceil(width * height / 64.0f), 1, 1);
     }
 
     void OnRenderObject()
