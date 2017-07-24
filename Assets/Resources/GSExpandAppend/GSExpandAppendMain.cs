@@ -4,12 +4,14 @@ using UnityEngine;
 
 public class GSExpandAppendMain : MonoBehaviour
 {
-    const int width = 1024; // TMP 8192
-    const int height = 4096;
-    const float spacing = 0.05f;
+    const int width = 2; // TMP 8192
+    const int height = 2; // TMP 4096
+    const float spacing = 0.2f; // TMP 0.05f
 
     ComputeBuffer mPositionBuffer = null;
     ComputeBuffer mArgsBuffer = null;
+
+    ComputeBuffer mColorBuffer = null;
 
     ComputeShader mComputeShader = null;
 
@@ -17,10 +19,12 @@ public class GSExpandAppendMain : MonoBehaviour
 
 	void Start ()
     {
-        Camera.main.transform.position = new Vector3(width / 2.0f * spacing, height / 2.0f * spacing, -150);
+        Camera.main.transform.position = new Vector3(width / 2.0f * spacing, height / 2.0f * spacing, -1); // TMP -150
 
         mPositionBuffer = new ComputeBuffer(width * height, sizeof(float) * 4, ComputeBufferType.Default);
         mArgsBuffer = new ComputeBuffer(1, sizeof(int) * 4, ComputeBufferType.IndirectArguments);
+
+        mColorBuffer = new ComputeBuffer(width * height, sizeof(float) * 4, ComputeBufferType.Default);
 
         Shader renderShader = Resources.Load<Shader>("GSExpandAppend/GSExpandAppendRenderShader");
         Debug.Assert(renderShader, "Failed loading render shader.");
@@ -35,6 +39,9 @@ public class GSExpandAppendMain : MonoBehaviour
 	void Update ()
     {
         mComputeShader.SetBuffer(0, "gPosition", mPositionBuffer);
+
+        mComputeShader.SetBuffer(0, "gColor", mColorBuffer);
+
         mComputeShader.SetInt("gCount", width * height);
 
         mComputeShader.SetFloat("gSpacing", spacing);
@@ -49,6 +56,8 @@ public class GSExpandAppendMain : MonoBehaviour
 
         mRenderMaterial.SetBuffer("gPosition", mPositionBuffer);
 
+        mRenderMaterial.SetBuffer("gColor", mColorBuffer);
+
         Graphics.DrawProceduralIndirect(MeshTopology.Points, mArgsBuffer);
     }
 
@@ -56,6 +65,7 @@ public class GSExpandAppendMain : MonoBehaviour
     {
         mPositionBuffer.Release();
         mArgsBuffer.Release();
+        mColorBuffer.Release();
     }
 
 }

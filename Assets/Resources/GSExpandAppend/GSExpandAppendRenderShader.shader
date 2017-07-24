@@ -20,13 +20,16 @@
 			#pragma geometry geom
 			#pragma fragment frag
 
-			StructuredBuffer<float4> gPosition;
+            StructuredBuffer<float4> gPosition;
+
+            StructuredBuffer<float4> gColor;
 
 			// ---
 
 			struct VS_OUTPUT
 			{
 				float4 svPosition : SV_POSITION;
+                float3 color : COLOR;
 			};
 
             VS_OUTPUT vert(uint vID : SV_VertexID)
@@ -34,6 +37,7 @@
                 VS_OUTPUT output;
 
 				output.svPosition = float4(gPosition[vID].xyz, 1);
+                output.color = gColor[vID].xyz;
 
 				return output;
 			}
@@ -44,6 +48,7 @@
 			{
 				float4 svPosition : SV_POSITION;
 				float2 uv : UV;
+                float3 color : COLOR;
 			};
 
 			[maxvertexcount(4)]
@@ -70,6 +75,7 @@
 
 					output.svPosition = UnityObjectToClipPos(float4(vPosition, 1));
                     output.uv = float2(x, 1.0f - y);
+                    output.color = input[0].color;
 
 					TriStream.Append(output);
 				}
@@ -88,7 +94,7 @@
 
 				float cosFactor = -cos(3.14159265f / 2.f * (factor + 1.f));
 
-				return float4(0, 1, 0, cosFactor);
+				return float4(input.color, cosFactor);
 			}
 
 			ENDCG

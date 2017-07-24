@@ -2,6 +2,8 @@
 
 RWStructuredBuffer<float4> gPosition;
 
+RWStructuredBuffer<float4> gColor;
+
 uniform int gCount;
 
 uniform float gSpacing;
@@ -18,4 +20,7 @@ void MAIN(uint3 id : SV_DispatchThreadID)
     float spacing = gSpacing;
 
     gPosition[tID] = float4((tID % width) * spacing, (tID / width) * spacing, 0, 0);
+    //gPosition.Append(float4((tID % width) * spacing, (tID / width) * spacing, 0, 0));
+
+    gColor[tID] = float4(tID / width, (tID % width) / width, 1.0f, 0);
 }
