@@ -55,18 +55,13 @@ public class OSAppendMain : MonoBehaviour
 
     void OnRenderObject()
     {
-        //mVertexBuffer.SetCounterValue(1338);
         ComputeBuffer.CopyCount(mVertexBuffer, mArgsBuffer, 0);
-        int[] r = new int[4];
-        mArgsBuffer.GetData(r);
-        Debug.Log(r[0]);
 
         mRenderMaterial.SetPass(0);
 
         mRenderMaterial.SetBuffer("gVertexBuffer", mVertexBuffer);
 
-        //Graphics.DrawProceduralIndirect(MeshTopology.Triangles, mArgsBuffer);
-        Graphics.DrawProcedural(MeshTopology.Triangles, 3, 1);
+        Graphics.DrawProceduralIndirect(MeshTopology.Triangles, mArgsBuffer);
     }
 
     void OnDestroy()
