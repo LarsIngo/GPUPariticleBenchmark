@@ -54,7 +54,7 @@
 				float3 lensForward = UNITY_MATRIX_IT_MV[2].xyz;
 
 				float3 pPosition = input[0].svPosition.xyz;
-                float2 pScale = float2(0.5f, 0.5f);
+                float2 pScale = float2(0.1f, 0.1f);
 
 				float3 pForward = normalize(_WorldSpaceCameraPos - pPosition);
 				float3 pRight = cross(pForward, lensUp);
