@@ -1,8 +1,6 @@
 ﻿#pragma kernel MAIN
 
-RWStructuredBuffer<float4> gPosition;
-
-RWStructuredBuffer<float4> gColor;
+AppendStructuredBuffer<float4> gPosition;
 
 uniform int gCount;
 
@@ -19,8 +17,5 @@ void MAIN(uint3 id : SV_DispatchThreadID)
     uint width = gWidth;
     float spacing = gSpacing;
 
-    gPosition[tID] = float4((tID % width) * spacing, (tID / width) * spacing, 0, 0);
-    //gPosition.Append(float4((tID % width) * spacing, (tID / width) * spacing, 0, 0));
-
-    gColor[tID] = float4(tID / width, (tID % width) / width, 1.0f, 0);
+    gPosition.Append(float4((tID % width) * spacing, (tID / width) * spacing, 0, 0));
 }
