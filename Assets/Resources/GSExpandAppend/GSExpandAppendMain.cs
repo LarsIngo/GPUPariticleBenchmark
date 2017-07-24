@@ -22,18 +22,20 @@ public class GSExpandAppendMain : MonoBehaviour
         mPositionBuffer = new ComputeBuffer(width * height, sizeof(float) * 4, ComputeBufferType.Append);
         mArgsBuffer = new ComputeBuffer(1, sizeof(int) * 4, ComputeBufferType.IndirectArguments);
 
+        mArgsBuffer.SetData(new int[] { width * height, 1, 0, 0 });
+
         Shader renderShader = Resources.Load<Shader>("GSExpandAppend/GSExpandAppendRenderShader");
         Debug.Assert(renderShader, "Failed loading render shader.");
         mRenderMaterial = new Material(renderShader);
 
         mComputeShader = Resources.Load<ComputeShader>("GSExpandAppend/GSExpandAppendComputeShader");
         Debug.Assert(mComputeShader, "Failed loading compute shader.");
-
-        mArgsBuffer.SetData(new int[] { width * height, 1, 0, 0 });
     }
 	
 	void Update ()
     {
+        //mPositionBuffer.SetCounterValue(0);
+
         mComputeShader.SetBuffer(0, "gPosition", mPositionBuffer);
 
         mComputeShader.SetInt("gCount", width * height);
@@ -46,6 +48,8 @@ public class GSExpandAppendMain : MonoBehaviour
 
     void OnRenderObject()
     {
+        //ComputeBuffer.CopyCount(mPositionBuffer, mArgsBuffer, 0);
+
         mRenderMaterial.SetPass(0);
 
         mRenderMaterial.SetBuffer("gPosition", mPositionBuffer);
