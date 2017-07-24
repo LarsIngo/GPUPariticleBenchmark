@@ -19,7 +19,7 @@ public class GSExpandMain : MonoBehaviour
     {
         Camera.main.transform.position = new Vector3(width / 2.0f * spacing, height / 2.0f * spacing, -150);
 
-        mPositionBuffer = new ComputeBuffer(width * height, sizeof(float) * 4, ComputeBufferType.Append);
+        mPositionBuffer = new ComputeBuffer(width * height, sizeof(float) * 4, ComputeBufferType.Default);
         mArgsBuffer = new ComputeBuffer(1, sizeof(int) * 4, ComputeBufferType.IndirectArguments);
 
         Shader renderShader = Resources.Load<Shader>("GSExpand/GSExpandRenderShader");
