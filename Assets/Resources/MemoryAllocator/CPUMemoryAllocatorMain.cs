@@ -42,6 +42,8 @@ public class CPUMemoryAllocatorMain : MonoBehaviour
             Debug.Log(i + ": " + mMemory[i]);
     }
 
+    int tmpCount = 0;
+
     // Returns start index.
     Chunk Allocate(int size)
     {
@@ -51,11 +53,12 @@ public class CPUMemoryAllocatorMain : MonoBehaviour
         // Allocate chunk.
         Debug.Assert(startIndex + size <= mMaxSize, "Size to big, out of memory.");
         Chunk chunk = new Chunk(startIndex, size);
-        mAllocatedList.Add(startIndex, chunk);
+        mAllocatedList.Add(chunk.mStartIndex, chunk);
 
         // Insert default values.
         for (int i = startIndex; i < startIndex + size; ++i)
-            mMemory[i] = mAllocatedList.Count-1;
+            mMemory[i] = tmpCount;
+        tmpCount++;
 
         // Increment end index.
         mEndIndex += size;
@@ -88,7 +91,7 @@ public class CPUMemoryAllocatorMain : MonoBehaviour
         mAllocatedList.Remove(chunk.mStartIndex);
     }
 
-    void Defragment(uint steps = uint.MaxValue)
+    void Defragment(uint steps = 10) // TMP uint.MaxValue
     {
         // Return early if dividing defragmentation over several frames.
         if (steps == 0) return;
@@ -120,11 +123,18 @@ public class CPUMemoryAllocatorMain : MonoBehaviour
             for (int i = 0; i < allocatedChunk.mSize; ++i)
             {
                 mMemory[fragmentedChunk.mStartIndex + i] = mMemory[allocatedChunk.mStartIndex + i];
+
+                // Set "null" value to deallocated memory.
+                mMemory[allocatedChunk.mStartIndex + i] = -1;
             }
+
+            mAllocatedList.Remove(allocatedChunk.mStartIndex);
 
             // Update chunk start index.
             allocatedChunk.mStartIndex = fragmentedChunk.mStartIndex;
             fragmentedChunk.mStartIndex = allocatedChunk.mStartIndex + allocatedChunk.mSize;
+
+            mAllocatedList.Add(allocatedChunk.mStartIndex, allocatedChunk);
 
             mFragmentedFreeList.RemoveAt(0);
             mFragmentedFreeList.Add(fragmentedChunk.mStartIndex, fragmentedChunk);
@@ -149,22 +159,30 @@ public class CPUMemoryAllocatorMain : MonoBehaviour
         Defragment(steps - 1);
     }
 
-	void Start ()
+    List<Chunk> testList = new List<Chunk>();
+
+    void Start ()
     {
         Init();
 
-        Chunk a = Allocate(2);
-        Chunk b = Allocate(2);
-        Chunk c = Allocate(2);
+        testList.Add(Allocate(2));
+        testList.Add(Allocate(2));
+        testList.Add(Allocate(2));
 
-        Free(b);
+        Print();
     }
-	
+
 	void Update ()
     {
         Debug.Log("---");
 
-        Defragment(1);
+        testList.Add(Allocate(2));
+
+        int index = 0;//Random.Range(0, testList.Count - 1);
+        Free(testList[index]);
+        testList.RemoveAt(index);
+
+        Defragment();
 
         Print();
     }
