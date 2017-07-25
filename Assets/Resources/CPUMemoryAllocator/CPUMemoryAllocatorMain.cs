@@ -266,7 +266,7 @@ public class CPUMemoryAllocatorMain : MonoBehaviour
         testList.Add(memoryHandle);
 
 
-        memoryHandle = testList[0];
+        memoryHandle = testList[Random.Range(0, testList.Count-1)];
         testList.Remove(memoryHandle);
         Free(memoryHandle);
 
