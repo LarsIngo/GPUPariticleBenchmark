@@ -8,8 +8,7 @@ public class GPUMemoryManagerMainScript : MonoBehaviour {
     {
         GPUMemoryManager.Instance.StartUp();
 
-        GPUMemoryBlock positionBlock = GPUMemoryManager.Instance.CreateGPUMemoryBlock("PositionBlock", 16, sizeof(float) * 1, ComputeBufferType.Default); // TODO Template!
-
+        GPUMemoryBlock positionBlock = GPUMemoryManager.Instance.CreateGPUMemoryBlock<float>("PositionBlock", 16, ComputeBufferType.Default);
 
 
         Debug.Log("EndIndex: " + positionBlock.EndIndex);
@@ -18,7 +17,7 @@ public class GPUMemoryManagerMainScript : MonoBehaviour {
         emitter1.SetData(new float[] { 1, 2 });
         Debug.Log("EndIndex: " + positionBlock.EndIndex);
         {
-            float[] dataArray = emitter1.GetData();
+            float[] dataArray = emitter1.GetData<float>();
             for (int i = 0; i < dataArray.GetLength(0); ++i)
                 Debug.Log(dataArray[i]);
         }
@@ -27,7 +26,7 @@ public class GPUMemoryManagerMainScript : MonoBehaviour {
         emitter2.SetData(new float[] { 3, 4 });
         Debug.Log("EndIndex: " + positionBlock.EndIndex);
         {
-            float[] dataArray = emitter2.GetData();
+            float[] dataArray = emitter2.GetData<float>();
             for (int i = 0; i < dataArray.GetLength(0); ++i)
                 Debug.Log(dataArray[i]);
         }
@@ -38,7 +37,7 @@ public class GPUMemoryManagerMainScript : MonoBehaviour {
         positionBlock.Defragment();
         Debug.Log("EndIndex: " + positionBlock.EndIndex); ;
         {
-            float[] dataArray = emitter2.GetData();
+            float[] dataArray = emitter2.GetData<float>();
             for (int i = 0; i < dataArray.GetLength(0); ++i)
                 Debug.Log(dataArray[i]);
         }

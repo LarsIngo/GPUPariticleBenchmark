@@ -79,13 +79,12 @@ public class GPUMemoryManager
     /// </summary>
     /// <param name="name">Name of memory block. Enables access to block if reference is lost. Name must be unique.</param>
     /// <param name="capacity">Capacity(number of elements) of memory block.</param>
-    /// <param name="stride">Stride of memory block.</param>
     /// <param name="type">Type of memory block.</param>
-    public GPUMemoryBlock CreateGPUMemoryBlock(string name, int capacity, int stride, ComputeBufferType type)
+    public GPUMemoryBlock CreateGPUMemoryBlock<T>(string name, int capacity, ComputeBufferType type)
     {
         int hash = name.GetHashCode();
         Debug.Assert(!mGPUMemoryBlockDictionary.ContainsKey(hash), "Name(hash) already exist.");
-        GPUMemoryBlock block = new GPUMemoryBlock(capacity, stride, type);
+        GPUMemoryBlock block = new GPUMemoryBlock(capacity, System.Runtime.InteropServices.Marshal.SizeOf(typeof(T)), type);
         mGPUMemoryBlockDictionary.Add(hash, block);
         mINVGPUMemoryBlockDictionary.Add(block, hash);
         return block;

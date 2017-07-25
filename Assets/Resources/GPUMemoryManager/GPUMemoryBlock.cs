@@ -62,7 +62,7 @@ public class GPUMemoryBlock
         /// Copy array to GPU memory.
         /// </summary>
         /// <param name="dataArray">Array with data to copy.</param>
-        public void SetData(float[] dataArray)
+        public void SetData<T>(T[] dataArray)
         {
             Debug.Assert(dataArray.GetLength(0) == Count, "Error: Array not same length as partition.");
             mBlock.mComputeBuffer.SetData(dataArray, 0, Offset, Count);
@@ -72,9 +72,9 @@ public class GPUMemoryBlock
         /// Copy array from GPU memory.
         /// Returns array with data from GPU.
         /// </summary>
-        public float[] GetData()
+        public T[] GetData<T>()
         {
-            float[] dataArray = new float[Count];
+            T[] dataArray = new T[Count];
             mBlock.mComputeBuffer.GetData(dataArray, 0, Offset, Count);
             return dataArray;
         }
@@ -291,7 +291,7 @@ public class GPUMemoryBlock
             Partition allocatedPartition = mAllocatedPartitionList[nextPartitionOffset];
 
             // Move allocated partition memory. TODO on GPU + Template!
-            float[] dataArray = new float[allocatedPartition.mCount];
+            byte[] dataArray = new byte[allocatedPartition.mCount];
             mComputeBuffer.GetData(dataArray, 0, allocatedPartition.mOffset, allocatedPartition.mCount);
             mComputeBuffer.SetData(dataArray, 0, fragmentedPartition.mOffset, allocatedPartition.mCount);
 
