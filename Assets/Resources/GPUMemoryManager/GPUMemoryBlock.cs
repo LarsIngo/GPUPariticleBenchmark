@@ -290,7 +290,7 @@ public class GPUMemoryBlock
             // Next partition is allocated and should swap place with fragmented chunk.
             Partition allocatedPartition = mAllocatedPartitionList[nextPartitionOffset];
 
-            // Move allocated partition memory. TODO on GPU + Template!
+            // Move allocated partition memory.
             byte[] dataArray = new byte[allocatedPartition.mCount];
             mComputeBuffer.GetData(dataArray, 0, allocatedPartition.mOffset, allocatedPartition.mCount);
             mComputeBuffer.SetData(dataArray, 0, fragmentedPartition.mOffset, allocatedPartition.mCount);
