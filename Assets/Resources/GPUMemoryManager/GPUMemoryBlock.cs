@@ -32,6 +32,7 @@ public class GPUMemoryBlock
 
         /// <summary>
         /// Offset to the first element(Start index) in memory block.
+        /// <para />
         /// DO NOT ACCESS MEMORY OUTSIDE HANDLE.
         /// </summary>
         public int Offset
@@ -45,6 +46,7 @@ public class GPUMemoryBlock
 
         /// <summary>
         /// Number of elemets in memory block this handle maps to.
+        /// <para />
         /// DO NOT ACCESS MEMORY OUTSIDE HANDLE.
         /// </summary>
         public int Count
@@ -137,6 +139,22 @@ public class GPUMemoryBlock
     }
 
     /// <summary>
+    /// Get buffer to bind to pipeline.
+    /// </summary>
+    public ComputeBuffer Buffer
+    {
+        get { return mComputeBuffer; }
+    }
+
+    /// <summary>
+    /// End index, marking the end of allocated memory.
+    /// </summary>
+    public int EndIndex
+    {
+        get { return mEndIndex; }
+    }
+
+    /// <summary>
     /// Release memory block.
     /// </summary>
     public void Release()
@@ -170,6 +188,120 @@ public class GPUMemoryBlock
         Handle handle = new Handle(this);
         mPartitionDictionary[handle] = partition;
         return handle;
+    }
+
+    /// <summary>
+    /// Free memory.
+    /// Deallocate memory in block.
+    /// </summary>
+    /// <param name="handle">Handle mapped to partition.</param>
+    public void Free(Handle handle)
+    {
+        // Get partition mapped to handle.
+        Debug.Assert(mPartitionDictionary.ContainsKey(handle), "Error: Handle not mapped to this block.");
+        Partition partition = mPartitionDictionary[handle];
+
+        Debug.Assert(mAllocatedPartitionList.ContainsValue(partition), "Error: Can't remove partition not allocated.");
+
+        if (partition.mOffset + partition.mCount == mEndIndex)
+        {   // Remove last partition by moving end index back.
+            mEndIndex = partition.mOffset;
+
+            //// Insert "null" values to flag unallocated data. // TODO
+            //for (int i = chunk.mStartIndex; i < chunk.mStartIndex + chunk.mSize; ++i)
+            //    mMemory[i] = -1;
+        }
+        else
+        {   // Fragmented partition, add to fragmented list.
+            mFragmentedPartitionList.Add(partition.mOffset, partition);
+
+            //// Insert "null" values to flag unallocated data. // TODO
+            //for (int i = chunk.mStartIndex; i < chunk.mStartIndex + chunk.mSize; ++i)
+            //    mMemory[i] = -1;
+        }
+
+        // Remove partition from allocated list.
+        mAllocatedPartitionList.Remove(partition.mOffset);
+
+        // Remove/Destory Handle.
+        Debug.Assert(mPartitionDictionary.ContainsKey(handle), "Error: Handle not i Dictionary.");
+        mPartitionDictionary.Remove(handle);
+        handle = null;
+        partition = null;
+    }
+
+    /// <summary>
+    /// Defragment memory.
+    /// Memory block can become fragmented when removing allocated partitions.
+    /// Defragment memory by calling this function.
+    /// <para />
+    /// Defragmentation can be done over several frames.
+    /// </summary>
+    /// <param name="steps">Number of steps to make this frame. Default: Defragment whole block this frame(uint.MaxValue).</param>
+    public void Defragment(uint steps = uint.MaxValue)
+    {
+        // Return early if dividing defragmentation over several frames.
+        if (steps == 0) return;
+
+        // If no fragmented partitions, memory is defragmented.
+        if (mFragmentedPartitionList.Count == 0) return;
+
+        // Get [first] fragmented partition.
+        Partition fragmentedPartition = mFragmentedPartitionList.Values[0];
+        if (fragmentedPartition.mOffset + fragmentedPartition.mCount == mEndIndex)
+        {
+            // Assert this is the last fragmeneted chunk. Assert should never occur.
+            Debug.Assert(mFragmentedPartitionList.Count == 1, "Error: Not last fragemented partition! Something went wrong!");
+
+            // TODO. Reset data?
+
+            // Move end index and clear fragmented list.
+            mEndIndex = fragmentedPartition.mOffset;
+            mFragmentedPartitionList.Clear();
+
+            // Memory defragmentation DONE.
+            return;
+        }
+
+        int nextPartitionOffset = fragmentedPartition.mOffset + fragmentedPartition.mCount;
+        if (mAllocatedPartitionList.ContainsKey(nextPartitionOffset))
+        {
+            // Next partition is allocated and should swap place with fragmented chunk.
+            Partition allocatedPartition = mAllocatedPartitionList[nextPartitionOffset];
+
+            // Move allocated partition memory. TODO on GPU + Template!
+            float[] dataArray = new float[allocatedPartition.mCount];
+            mComputeBuffer.GetData(dataArray, 0, allocatedPartition.mOffset, allocatedPartition.mCount);
+            mComputeBuffer.SetData(dataArray, 0, fragmentedPartition.mOffset, allocatedPartition.mCount);
+
+            // Update allocated partition offset in list.
+            mAllocatedPartitionList.Remove(allocatedPartition.mOffset);
+            allocatedPartition.mOffset = fragmentedPartition.mOffset;
+            fragmentedPartition.mOffset = allocatedPartition.mOffset + allocatedPartition.mCount;
+            mAllocatedPartitionList.Add(allocatedPartition.mOffset, allocatedPartition);
+
+            // Update fragmented partition offset in list.
+            mFragmentedPartitionList.RemoveAt(0);
+            mFragmentedPartitionList.Add(fragmentedPartition.mOffset, fragmentedPartition);
+        }
+        else if (mFragmentedPartitionList.ContainsKey(nextPartitionOffset))
+        {
+            // Next partition is free and should be combined with fragmented chunk.
+            Partition nextPartition = mFragmentedPartitionList[nextPartitionOffset];
+
+            // Combine partitions.
+            fragmentedPartition.mOffset += nextPartition.mOffset;
+
+            // Remove next partition.
+            mFragmentedPartitionList.Remove(nextPartitionOffset);
+        }
+        else
+        {
+            Debug.Assert(false, "Error: Something went wrong! [nextPartitionOffset] not found in dictionary.");
+        }
+
+        // Continue defragmentation.
+        Defragment(steps - 1);
     }
 
 }
