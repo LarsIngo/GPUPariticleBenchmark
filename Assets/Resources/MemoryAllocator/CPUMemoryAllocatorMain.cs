@@ -5,7 +5,7 @@ using UnityEngine;
 public class CPUMemoryAllocatorMain : MonoBehaviour
 {
 
-    struct Chunk
+    public class Chunk
     {
         public int mStartIndex;
         public int mSize;
@@ -17,6 +17,19 @@ public class CPUMemoryAllocatorMain : MonoBehaviour
         }
     }
 
+    public class MemoryHandle
+    {
+        public int GetStartIndex()
+        {
+            return sMemoryHandleDic[this].mStartIndex;
+        }
+
+        public int GetSize()
+        {
+            return sMemoryHandleDic[this].mSize;
+        }
+    }
+
     const int mMaxSize = 16;
     int[] mMemory = new int[mMaxSize];
     int mEndIndex = 0;
@@ -24,28 +37,28 @@ public class CPUMemoryAllocatorMain : MonoBehaviour
     SortedList<int, Chunk> mAllocatedList = new SortedList<int, Chunk>();
     SortedList<int, Chunk> mFragmentedFreeList = new SortedList<int, Chunk>();
 
+    static Dictionary<MemoryHandle, Chunk> sMemoryHandleDic = new Dictionary<MemoryHandle, Chunk>();
+
     void Init()
     {
         for (int i = 0; i < mMaxSize; ++i)
             mMemory[i] = -1;
     }
 
-    void Print()
-    {
-        for (int i = 0; i < mEndIndex; ++i)
-            Debug.Log(i + ": " + mMemory[i]);
-    }
+    //void Print()
+    //{
+    //    for (int i = 0; i < mEndIndex; ++i)
+    //        Debug.Log(i + ": " + mMemory[i]);
+    //}
 
-    void PrintAll()
-    {
-        for (int i = 0; i < mMaxSize; ++i)
-            Debug.Log(i + ": " + mMemory[i]);
-    }
-
-    int tmpCount = 0;
+    //void PrintAll()
+    //{
+    //    for (int i = 0; i < mMaxSize; ++i)
+    //        Debug.Log(i + ": " + mMemory[i]);
+    //}
 
     // Returns start index.
-    Chunk Allocate(int size)
+    MemoryHandle Allocate(int size)
     {
         // Store start index.
         int startIndex = mEndIndex;
@@ -57,17 +70,23 @@ public class CPUMemoryAllocatorMain : MonoBehaviour
 
         // Insert default values.
         for (int i = startIndex; i < startIndex + size; ++i)
-            mMemory[i] = tmpCount;
-        tmpCount++;
+            mMemory[i] = -1;
 
         // Increment end index.
         mEndIndex += size;
 
-        return chunk;
+        // Create memory handle.
+        MemoryHandle memoryHandle = new MemoryHandle();
+        sMemoryHandleDic[memoryHandle] = chunk;
+        return memoryHandle;
     }
 
-    void Free(Chunk chunk)
+    void Free(MemoryHandle memoryHandle)
     {
+        // Get chunk from memory handle.
+        Debug.Assert(sMemoryHandleDic.ContainsKey(memoryHandle));
+        Chunk chunk = sMemoryHandleDic[memoryHandle];
+
         Debug.Assert(mAllocatedList.ContainsValue(chunk), "Trying to remove chunk not allocated.");
 
         if (chunk.mStartIndex + chunk.mSize == mEndIndex)
@@ -89,9 +108,17 @@ public class CPUMemoryAllocatorMain : MonoBehaviour
 
         // Remove chunk from allocated list.
         mAllocatedList.Remove(chunk.mStartIndex);
+
+        // Deinit memory handle.
+        Debug.Assert(sMemoryHandleDic.ContainsKey(memoryHandle));
+
+        sMemoryHandleDic.Remove(memoryHandle);
+
+        memoryHandle = null;
+        chunk = null;
     }
 
-    void Defragment(uint steps = 10) // TMP uint.MaxValue
+    void Defragment(uint steps = uint.MaxValue)
     {
         // Return early if dividing defragmentation over several frames.
         if (steps == 0) return;
@@ -159,31 +186,99 @@ public class CPUMemoryAllocatorMain : MonoBehaviour
         Defragment(steps - 1);
     }
 
-    List<Chunk> testList = new List<Chunk>();
+    List<MemoryHandle> testList = new List<MemoryHandle>();
+
+    int tmpCount = 0;
 
     void Start ()
     {
         Init();
 
-        testList.Add(Allocate(2));
-        testList.Add(Allocate(2));
-        testList.Add(Allocate(2));
+        MemoryHandle memoryHandle;
 
-        Print();
+        memoryHandle = Allocate(2);
+        for (int i = memoryHandle.GetStartIndex(); i < memoryHandle.GetStartIndex() + memoryHandle.GetSize(); ++i)
+        {
+            mMemory[i] = tmpCount;
+        }
+        tmpCount++;
+        testList.Add(memoryHandle);
+
+        memoryHandle = Allocate(2);
+        for (int i = memoryHandle.GetStartIndex(); i < memoryHandle.GetStartIndex() + memoryHandle.GetSize(); ++i)
+        {
+            mMemory[i] = tmpCount;
+        }
+        tmpCount++;
+        testList.Add(memoryHandle);
+
+        memoryHandle = Allocate(2);
+        for (int i = memoryHandle.GetStartIndex(); i < memoryHandle.GetStartIndex() + memoryHandle.GetSize(); ++i)
+        {
+            mMemory[i] = tmpCount;
+        }
+        tmpCount++;
+        testList.Add(memoryHandle);
+
+        // PRINT.
+        Debug.Log("---");
+        foreach (MemoryHandle mh in testList)
+        {
+            for (int i = mh.GetStartIndex(); i < mh.GetStartIndex() + mh.GetSize(); ++i)
+                Debug.Log(i + ": " + mMemory[i]);
+        }
+
+
+        memoryHandle = testList[0];
+        testList.Remove(memoryHandle);
+        Free(memoryHandle);
+
+
+        // PRINT.
+        Debug.Log("---");
+        foreach (MemoryHandle mh in testList)
+        {
+            for (int i = mh.GetStartIndex(); i < mh.GetStartIndex() + mh.GetSize(); ++i)
+                Debug.Log(i + ": " + mMemory[i]);
+        }
+
+        Defragment();
+
+        // PRINT.
+        Debug.Log("---");
+        foreach (MemoryHandle mh in testList)
+        {
+            for (int i = mh.GetStartIndex(); i < mh.GetStartIndex() + mh.GetSize(); ++i)
+                Debug.Log(i + ": " + mMemory[i]);
+        }
     }
 
 	void Update ()
     {
-        Debug.Log("---");
+        MemoryHandle memoryHandle;
 
-        testList.Add(Allocate(2));
+        memoryHandle = Allocate(2);
+        for (int i = memoryHandle.GetStartIndex(); i < memoryHandle.GetStartIndex() + memoryHandle.GetSize(); ++i)
+        {
+            mMemory[i] = tmpCount;
+        }
+        tmpCount++;
+        testList.Add(memoryHandle);
 
-        int index = 0;//Random.Range(0, testList.Count - 1);
-        Free(testList[index]);
-        testList.RemoveAt(index);
+
+        memoryHandle = testList[0];
+        testList.Remove(memoryHandle);
+        Free(memoryHandle);
 
         Defragment();
 
-        Print();
+        // PRINT.
+        Debug.Log("---" + mEndIndex);
+        for (int j = 0; j < testList.Count; ++j)
+        {
+            MemoryHandle mh = testList[j];
+            for (int i = mh.GetStartIndex(); i < mh.GetStartIndex() + mh.GetSize(); ++i)
+                Debug.Log(j + ": " + mMemory[i]);
+        }
     }
 }
