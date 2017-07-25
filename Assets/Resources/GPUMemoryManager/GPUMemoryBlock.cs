@@ -10,7 +10,7 @@ using UnityEngine;
 public class GPUMemoryBlock
 {
 
-    #region CLASSES
+    #region HANDLE
 
     /// <summary>
     /// Handle to manage memory access to block.
@@ -85,6 +85,12 @@ public class GPUMemoryBlock
         }
     }
 
+    #endregion
+
+
+
+    #region PARTITION
+
     /// <summary>
     /// Private class to track data partitions.
     /// </summary>
@@ -111,6 +117,10 @@ public class GPUMemoryBlock
     }
 
     #endregion
+
+
+
+    #region VARIABLES
 
     /// <summary>
     /// End index in memory block. Allocates new partitions at this index.
@@ -139,6 +149,12 @@ public class GPUMemoryBlock
     /// Compute buffer contaning data.
     /// </summary>
     private ComputeBuffer mComputeBuffer = null;
+
+    #endregion
+
+
+
+    #region FUNCTIONS
 
     /// <summary>
     /// Constructor.
@@ -318,5 +334,7 @@ public class GPUMemoryBlock
         // Continue defragmentation.
         Defragment(steps - 1);
     }
+
+    #endregion
 
 }

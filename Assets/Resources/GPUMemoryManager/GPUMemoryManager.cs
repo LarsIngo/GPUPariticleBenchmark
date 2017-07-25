@@ -35,7 +35,6 @@ public class GPUMemoryManager
     #endregion
 
 
-
     #region MEMBER
 
     bool mInitlized = false;
