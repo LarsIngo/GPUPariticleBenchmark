@@ -53,9 +53,30 @@ public class GPUMemoryBlock
         {
             get
             {
-                Debug.Assert(mBlock.mPartitionDictionary.ContainsKey(this), "Error: Handle maps to wrong block.");
+                Debug.Assert(mBlock.mPartitionDictionary.ContainsKey(this), "Error: Handle doesn't map to block.");
                 return mBlock.mPartitionDictionary[this].mCount;
             }
+        }
+
+        /// <summary>
+        /// Copy array to GPU memory.
+        /// </summary>
+        /// <param name="dataArray">Array with data to copy.</param>
+        public void SetData(float[] dataArray)
+        {
+            Debug.Assert(dataArray.GetLength(0) == Count, "Error: Array not same length as partition.");
+            mBlock.mComputeBuffer.SetData(dataArray, 0, Offset, Count);
+        }
+
+        /// <summary>
+        /// Copy array from GPU memory.
+        /// Returns array with data from GPU.
+        /// </summary>
+        public float[] GetData()
+        {
+            float[] dataArray = new float[Count];
+            mBlock.mComputeBuffer.GetData(dataArray, 0, Offset, Count);
+            return dataArray;
         }
     }
 
