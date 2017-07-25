@@ -120,6 +120,74 @@ public class GPUMemoryBlock
 
 
 
+    #region SWAPBUFFER
+
+    /// <summary>
+    /// Private class contaning several compute buffers.
+    /// </summary>
+    private class SwapBuffer
+    {
+        /// <summary>
+        /// Buffer array contaning data.
+        /// </summary>
+        private ComputeBuffer[] mBuffers = null;
+
+        /// <summary>
+        /// Buffer array contaning data.
+        /// </summary>
+        private int mBufferCount;
+
+        /// <summary>
+        /// Walker to swap between buffers.
+        /// </summary>
+        private int mWalker = 0;
+
+        /// <summary>
+        /// Buffer to read from.
+        /// </summary>
+        public ComputeBuffer ReadBuffer
+        {
+            get { return mBuffers[mWalker]; }
+        }
+
+        /// <summary>
+        /// Buffer to write to.
+        /// </summary>
+        public ComputeBuffer WriteBuffer
+        {
+            get { return mBuffers[(mWalker + 1) % mBufferCount]; }
+        }
+
+        /// <summary>
+        /// Swap buffers.
+        /// </summary>
+        public void Swap()
+        {
+            mWalker = (mWalker + 1) % mBufferCount;
+        }
+
+        /// <summary>
+        /// Constuctor.
+        /// </summary>
+        /// <param name="capacity">Capacity(number of elemets) of memory block.</param>
+        /// <param name="stride">Stride of memory block.</param>
+        /// <param name="type">Type of memory block.</param>
+        /// <param name="bufferCount">Number of buffers in swap buffer. Default: 2.</param>
+        public SwapBuffer(int capacity, int stride, ComputeBufferType type, int bufferCount = 2)
+        {
+            mBufferCount = bufferCount;
+            mBuffers = new ComputeBuffer[mBufferCount];
+            for (int i = 0; i < mBufferCount; ++i)
+            {
+                mBuffers[i] = new ComputeBuffer(capacity, stride, type);
+            }
+        }
+    }
+
+    #endregion
+
+
+
     #region VARIABLES
 
     /// <summary>
