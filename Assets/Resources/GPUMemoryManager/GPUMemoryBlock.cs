@@ -2,6 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Allocates a large memory block(compute buffer) and partition it into smaller blocks.
+/// <para />
+/// Use Allocate to get a Handle to access a partition.
+/// </summary>
 public class GPUMemoryBlock
 {
 
@@ -39,7 +44,7 @@ public class GPUMemoryBlock
         {
             get
             {
-                Debug.Assert(mBlock.mPartitionDictionary.ContainsKey(this), "Error: Handle maps to wrong block.");
+                Debug.Assert(mBlock.mPartitionDictionary.ContainsKey(this), "Error: Handle doesn't map to block.");
                 return mBlock.mPartitionDictionary[this].mOffset;
             }
         }
@@ -95,6 +100,9 @@ public class GPUMemoryBlock
         /// </summary>
         public int mCount;
 
+        /// <summary>
+        /// Constuctor.
+        /// </summary>
         public Partition(int offset, int count)
         {
             mOffset = offset;
@@ -198,10 +206,6 @@ public class GPUMemoryBlock
         Partition partition = new Partition(offset, count);
         mAllocatedPartitionList.Add(partition.mOffset, partition);
 
-        //// Insert default values. // TODO
-        //for (int i = startIndex; i < startIndex + size; ++i)
-        //    mMemory[i] = -1;
-
         // Increment end index.
         mEndIndex += count;
 
@@ -227,18 +231,10 @@ public class GPUMemoryBlock
         if (partition.mOffset + partition.mCount == mEndIndex)
         {   // Remove last partition by moving end index back.
             mEndIndex = partition.mOffset;
-
-            //// Insert "null" values to flag unallocated data. // TODO
-            //for (int i = chunk.mStartIndex; i < chunk.mStartIndex + chunk.mSize; ++i)
-            //    mMemory[i] = -1;
         }
         else
         {   // Fragmented partition, add to fragmented list.
             mFragmentedPartitionList.Add(partition.mOffset, partition);
-
-            //// Insert "null" values to flag unallocated data. // TODO
-            //for (int i = chunk.mStartIndex; i < chunk.mStartIndex + chunk.mSize; ++i)
-            //    mMemory[i] = -1;
         }
 
         // Remove partition from allocated list.
@@ -273,8 +269,6 @@ public class GPUMemoryBlock
         {
             // Assert this is the last fragmeneted chunk. Assert should never occur.
             Debug.Assert(mFragmentedPartitionList.Count == 1, "Error: Not last fragemented partition! Something went wrong!");
-
-            // TODO. Reset data?
 
             // Move end index and clear fragmented list.
             mEndIndex = fragmentedPartition.mOffset;
