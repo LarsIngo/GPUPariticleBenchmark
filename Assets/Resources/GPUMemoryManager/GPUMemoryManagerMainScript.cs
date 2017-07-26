@@ -15,19 +15,19 @@ public class GPUMemoryManagerMainScript : MonoBehaviour
         Debug.Log("EndIndex: " + positionBlock.EndIndex);
 
         GPUMemoryBlock.Handle emitter1 = positionBlock.Allocate(2);
-        emitter1.SetData(new Vector4[] { new Vector4(1,1,1,1), new Vector4(2,2,2,2) });
+        emitter1.SetData(GPUMemoryBlock.SWAPBUFFER.WRITE, new Vector4[] { new Vector4(1,1,1,1), new Vector4(2,2,2,2) });
         Debug.Log("EndIndex: " + positionBlock.EndIndex);
         {
-            Vector4[] dataArray = emitter1.GetData<Vector4>();
+            Vector4[] dataArray = emitter1.GetData<Vector4>(GPUMemoryBlock.SWAPBUFFER.WRITE);
             for (int i = 0; i < dataArray.GetLength(0); ++i)
                 Debug.Log(dataArray[i]);
         }
 
         GPUMemoryBlock.Handle emitter2 = positionBlock.Allocate(2);
-        emitter2.SetData(new Vector4[] { new Vector4(3, 3, 3, 3), new Vector4(4, 4, 4, 4) });
+        emitter2.SetData(GPUMemoryBlock.SWAPBUFFER.WRITE, new Vector4[] { new Vector4(3, 3, 3, 3), new Vector4(4, 4, 4, 4) });
         Debug.Log("EndIndex: " + positionBlock.EndIndex);
         {
-            Vector4[] dataArray = emitter2.GetData<Vector4>();
+            Vector4[] dataArray = emitter2.GetData<Vector4>(GPUMemoryBlock.SWAPBUFFER.WRITE);
             for (int i = 0; i < dataArray.GetLength(0); ++i)
                 Debug.Log(dataArray[i]);
         }
@@ -38,7 +38,7 @@ public class GPUMemoryManagerMainScript : MonoBehaviour
         positionBlock.Defragment();
         Debug.Log("EndIndex: " + positionBlock.EndIndex); ;
         {
-            Vector4[] dataArray = emitter2.GetData<Vector4>();
+            Vector4[] dataArray = emitter2.GetData<Vector4>(GPUMemoryBlock.SWAPBUFFER.WRITE);
             for (int i = 0; i < dataArray.GetLength(0); ++i)
                 Debug.Log(dataArray[i]);
         }

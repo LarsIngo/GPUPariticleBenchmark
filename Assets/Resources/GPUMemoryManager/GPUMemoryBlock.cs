@@ -66,21 +66,25 @@ public class GPUMemoryBlock
         /// <summary>
         /// Copy array to GPU memory.
         /// </summary>
+        /// <param name="swapbuffer">Which buffer to set data in. [WRITE or READ]</param>
         /// <param name="dataArray">Array with data to copy.</param>
-        public void SetData<T>(T[] dataArray)
+        public void SetData<T>(SWAPBUFFER swapbuffer, T[] dataArray)
         {
             Debug.Assert(dataArray.GetLength(0) == Count, "Error: Array not same length as partition.");
-            mBlock.mComputeBuffer.SetData(dataArray, 0, Offset, Count);
+            ComputeBuffer buffer = swapbuffer == SWAPBUFFER.WRITE ? mBlock.mSwapBuffer.WriteBuffer : mBlock.mSwapBuffer.ReadBuffer;
+            buffer.SetData(dataArray, 0, Offset, Count);
         }
 
         /// <summary>
         /// Copy array from GPU memory.
         /// Returns array with data from GPU.
         /// </summary>
-        public T[] GetData<T>()
+        /// <param name="swapbuffer">Which buffer to get data from. [WRITE or READ]</param>
+        public T[] GetData<T>(SWAPBUFFER swapbuffer)
         {
             T[] dataArray = new T[Count];
-            mBlock.mComputeBuffer.GetData(dataArray, 0, Offset, Count);
+            ComputeBuffer buffer = swapbuffer == SWAPBUFFER.WRITE ? mBlock.mSwapBuffer.WriteBuffer : mBlock.mSwapBuffer.ReadBuffer;
+            buffer.GetData(dataArray, 0, Offset, Count);
             return dataArray;
         }
     }
@@ -121,6 +125,12 @@ public class GPUMemoryBlock
 
 
     #region SWAPBUFFER
+
+    public enum SWAPBUFFER
+    {
+        READ,
+        WRITE
+    }
 
     /// <summary>
     /// Private class contaning several compute buffers.
@@ -164,6 +174,17 @@ public class GPUMemoryBlock
         public void Swap()
         {
             mWalker = (mWalker + 1) % mBufferCount;
+        }
+
+        /// <summary>
+        /// Release buffers.
+        /// </summary>
+        public void Release()
+        {
+            for (int i = 0; i < mBufferCount; ++i)
+            {
+                mBuffers[i].Release();
+            }
         }
 
         /// <summary>
@@ -214,9 +235,9 @@ public class GPUMemoryBlock
     private Dictionary<Handle, Partition> mPartitionDictionary = new Dictionary<Handle, Partition>();
 
     /// <summary>
-    /// Compute buffer contaning data.
+    /// Swap buffer contaning compute buffers.
     /// </summary>
-    private ComputeBuffer mComputeBuffer = null;
+    private SwapBuffer mSwapBuffer = null;
 
     #endregion
 
@@ -232,31 +253,67 @@ public class GPUMemoryBlock
     /// <param name="type">Type of memory block.</param>
     public GPUMemoryBlock(int capacity, int stride, ComputeBufferType type)
     {
-        mComputeBuffer = new ComputeBuffer(capacity, stride, type);
+        mCapacity = capacity;
+        mStride = stride;
+        mSwapBuffer = new SwapBuffer(capacity, stride, type);
     }
+
+    /// <summary>
+    /// Capacity(number of elemets) of memory block.
+    /// </summary>
+    private int mCapacity;
 
     /// <summary>
     /// Capacity(number of elements) of memory block.
     /// </summary>
     public int Capacity
     {
-       get { return mComputeBuffer.count; }
+        get { return mCapacity; }
     }
+
+    /// <summary>
+    /// Stride of memory block.
+    /// </summary>
+    private int mStride;
 
     /// <summary>
     /// Stride of memory block.
     /// </summary>
     public int Stride
     {
-        get { return mComputeBuffer.stride; }
+        get { return mStride; }
     }
 
     /// <summary>
-    /// Get buffer to bind to pipeline.
+    /// Buffer to read from.
     /// </summary>
-    public ComputeBuffer Buffer
+    public ComputeBuffer ReadBuffer
     {
-        get { return mComputeBuffer; }
+        get { return mSwapBuffer.ReadBuffer; }
+    }
+
+    /// <summary>
+    /// Buffer to write to.
+    /// </summary>
+    public ComputeBuffer WriteBuffer
+    {
+        get { return mSwapBuffer.WriteBuffer; }
+    }
+
+    /// <summary>
+    /// Swap to switch read and write buffer.
+    /// </summary>
+    public void Swap()
+    {
+        mSwapBuffer.Swap();
+    }
+
+    /// <summary>
+    /// Release memory block.
+    /// </summary>
+    public void Release()
+    {
+        mSwapBuffer.Release();
     }
 
     /// <summary>
@@ -265,14 +322,6 @@ public class GPUMemoryBlock
     public int EndIndex
     {
         get { return mEndIndex; }
-    }
-
-    /// <summary>
-    /// Release memory block.
-    /// </summary>
-    public void Release()
-    {
-        mComputeBuffer.Release();
     }
 
     /// <summary>
@@ -370,8 +419,14 @@ public class GPUMemoryBlock
 
             // Move allocated partition memory.
             byte[] dataArray = new byte[allocatedPartition.mCount];
-            mComputeBuffer.GetData(dataArray, 0, allocatedPartition.mOffset, allocatedPartition.mCount);
-            mComputeBuffer.SetData(dataArray, 0, fragmentedPartition.mOffset, allocatedPartition.mCount);
+
+            // Write buffer. TODO, CopyResource.
+            mSwapBuffer.WriteBuffer.GetData(dataArray, 0, allocatedPartition.mOffset, allocatedPartition.mCount);
+            mSwapBuffer.WriteBuffer.SetData(dataArray, 0, fragmentedPartition.mOffset, allocatedPartition.mCount);
+
+            // Read buffer.
+            mSwapBuffer.ReadBuffer.GetData(dataArray, 0, allocatedPartition.mOffset, allocatedPartition.mCount);
+            mSwapBuffer.ReadBuffer.SetData(dataArray, 0, fragmentedPartition.mOffset, allocatedPartition.mCount);
 
             // Update allocated partition offset in list.
             mAllocatedPartitionList.Remove(allocatedPartition.mOffset);
